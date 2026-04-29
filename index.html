@@ -353,7 +353,27 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 </style>
 </head>
 <body>
-
+  
+<div class="pop" id="pop-ratio" onclick="if(event.target.id==='pop-ratio')closeRatioChart()">
+  <div class="pop-box" style="max-width:780px;">
+    <div class="pop-head">
+      <h3>Ratio of Expected Errors — <em>EM / PF</em></h3>
+      <span class="tag tag-o">Theorem 3 · Utility</span>
+      <button class="pop-close" onclick="closeRatioChart()">✕</button>
+    </div>
+    <div style="padding:24px 26px;">
+      <div style="font-family:var(--fm);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Closed form · McKenna & Sheldon 2020</div>
+      <div style="font-family:var(--fh);font-size:14px;font-weight:700;color:var(--text);margin-bottom:16px;">E[E<sub>EM</sub>] / E[E<sub>PF</sub>] vs. p, for varying vocabulary size n</div>
+      <div style="position:relative;height:320px;">
+        <canvas id="chart-em-pf-ratio"></canvas>
+      </div>
+      <div style="margin-top:16px;padding:10px 16px;font-family:var(--fm);font-size:11.5px;color:var(--soft);line-height:1.65;background:var(--card-2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:0 var(--r-md) var(--r-md) 0;">
+        All curves start at <b style="color:var(--gold);">2.0</b> as p → 0 and converge to <b style="color:var(--gold);">1.0</b> at p = 1. The ratio is always ≥ 1, confirming PF/RNM-Exp <em style="color:var(--cyan);">never loses</em> to the Exponential Mechanism — and wins by up to 2× under strong privacy.
+      </div>
+    </div>
+  </div>
+</div>
+  
 <div class="pop" id="pop" onclick="popClose(event)">
   <div class="pop-box">
     <div class="pop-head">
@@ -469,7 +489,27 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
     <div class="g3 reveal">
       <div class="card card-hl card-hl-r"><div class="card-num">01</div><div class="eyebrow">Problem · Training</div><h3>LLMs <em>memorize</em></h3><p>Large language models trained on sensitive corpora can reproduce verbatim text — exposing private information through <strong>membership inference</strong> and <strong>data extraction attacks</strong> at inference time.</p></div>
       <div class="card card-hl card-hl-i"><div class="card-num">02</div><div class="eyebrow">Problem · Defence</div><h3>DP-SGD is <em>too costly</em></h3><p>Per-sample gradient clipping scales poorly to billion-parameter models. <strong>Inference-time DP decoding</strong> — injecting noise into the token selection step — is far more practical, but has its own pitfalls.</p></div>
-      <div class="card card-hl card-hl-g"><div class="card-num">03</div><div class="eyebrow">Problem · Mechanism</div><h3>Softmax <em>spreads the mass</em></h3><p>The standard Exponential Mechanism distributes probability across <em>all</em> tokens. Under high privacy noise, this assigns non-trivial mass to garbage tokens — producing <strong>incoherent, low-quality text</strong>.</p></div>
+     <div class="card card-hl card-hl-g"><div class="card-num">03</div><div class="eyebrow">Problem · Mechanism</div><h3>Softmax <em>spreads the mass</em></h3><p>The standard Exponential Mechanism distributes probability across <em>all</em> tokens. Under high privacy noise, this assigns non-trivial mass to garbage tokens — producing <strong>incoherent, low-quality text</strong>.</p></div>
+    </div>
+    <div class="reveal" style="margin-top:24px;display:flex;justify-content:center;">
+      <div style="width:100%;max-width:780px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;">
+        <div style="padding:14px 20px;background:var(--card-2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-family:var(--fm);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;">Empirical · n=50 tokens · ε=2.0</div>
+            <div style="font-family:var(--fh);font-size:15px;font-weight:700;color:#fff;">Utility Comparison: <em style="color:var(--cyan);font-style:italic;">Softmax vs. Permute-and-Flip</em></div>
+          </div>
+          <div style="display:flex;gap:14px;font-family:var(--fm);font-size:10px;">
+            <div style="display:flex;align-items:center;gap:6px;"><span style="width:22px;height:3px;background:var(--red);border-radius:2px;display:inline-block;"></span><span style="color:var(--soft);">Softmax / EM</span></div>
+            <div style="display:flex;align-items:center;gap:6px;"><span style="width:22px;height:3px;background:var(--cyan);border-radius:2px;display:inline-block;"></span><span style="color:var(--soft);">PF / RNM-Exp</span></div>
+          </div>
+        </div>
+        <div style="padding:18px 20px 20px;position:relative;height:260px;">
+          <canvas id="chart-utility-cmp"></canvas>
+        </div>
+        <div style="padding:10px 20px 14px;border-top:1px solid var(--border);font-family:var(--fm);font-size:10.5px;color:var(--soft);line-height:1.6;background:var(--card-2);">
+          PF/RNM-Exp concentrates mass on <b style="color:var(--cyan);">top-ranked tokens</b> — Softmax keeps assigning non-trivial probability to the <b style="color:var(--red);">garbage tail</b>, degrading output quality under privacy noise.
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -607,13 +647,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
         <p>For any privacy budget ε and any score distribution, the expected error of PF/RNM-Exp is <strong>always ≤</strong> the expected error of the Exponential Mechanism.</p>
         <div class="formula" style="font-size:12px;"><b>𝔼[E<sub>PF</sub>] ≤ 𝔼[E<sub>EM</sub>]</b> &nbsp;∀ ε, q</div>
         <p>In the asymptotic limit, the error ratio converges exactly to 2. <strong>Empirically confirmed: 9/9 configs show RNM selects top-1 tokens more often.</strong></p>
-        <div style="display:flex;gap:6px;margin-top:14px;">
-          <button class="thm-tab active" onclick="thm3Switch('text',this)">Proof summary</button>
-          <button class="thm-tab" onclick="thm3Switch('chart',this)">Error ratio chart</button>
-        </div>
-        <div id="thm3-chart-panel" style="display:none;margin-top:12px;">
-          <canvas id="chart-em-pf-ratio" style="max-height:200px;display:block;width:100%;"></canvas>
-        </div>
+        <button class="thm-tab" style="margin-top:14px;" onclick="openRatioChart()">↗ View error ratio chart</button>
       </div>
     </div>
   </div>
@@ -824,7 +858,7 @@ const SECTIONS=[
   {name:'Roadmap',   icon:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 16l4-8 4 4 4-8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="4" cy="16" r="1.5" fill="currentColor"/><circle cx="8" cy="8" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="16" cy="4" r="1.5" fill="currentColor"/></svg>'},
 ];
 const TOTAL=SECTIONS.length;
-let cur=0,busy=false,simBuilt=false,resultsBuilt=false;
+let cur=0,busy=false,simBuilt=false,resultsBuilt=false,utilBuilt=false;
 
 const iconNav=document.getElementById('icon-nav');
 SECTIONS.forEach((s,i)=>{
@@ -857,6 +891,7 @@ function goTo(n){
   setTimeout(()=>{
     leaving.classList.remove('leaving');cur=n;updateChrome();
     entering.classList.remove('entering');entering.classList.add('active');
+    if(cur===1&&!utilBuilt){buildUtilityChart();utilBuilt=true;}
     if(cur===5&&!simBuilt){buildSimCharts();simBuilt=true;}
     if(cur===6&&!resultsBuilt){buildAllResults();resultsBuilt=true;}
     setTimeout(()=>{busy=false;},350);
@@ -865,6 +900,7 @@ function goTo(n){
 function navigate(dir){goTo(cur+dir);}
 document.addEventListener('keydown',e=>{
   if(document.getElementById('pop').classList.contains('open')){if(e.key==='Escape')popCloseDirect();return;}
+  if(document.getElementById('pop-ratio').classList.contains('open')){if(e.key==='Escape')closeRatioChart();return;}
   if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key==='j')navigate(1);
   if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='k')navigate(-1);
   if(e.key==='Home')goTo(0);if(e.key==='End')goTo(TOTAL-1);
@@ -1224,11 +1260,14 @@ function popSetDS(ds){popDS=ds;renderPop();}
 function popSetEps(ei){popEi=ei;renderPop();}
 function popClose(e){if(e.target.id==='pop')popCloseDirect();}
 function popCloseDirect(){document.getElementById('pop').classList.remove('open');document.body.style.overflow='';}
-function thm3Switch(panel,btn){
-  document.getElementById('thm3-chart-panel').style.display=panel==='chart'?'block':'none';
-  btn.closest('div').querySelectorAll('.thm-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  if(panel==='chart'&&!CI['chart-em-pf-ratio'])buildThm3Chart();
+function openRatioChart(){
+  document.getElementById('pop-ratio').classList.add('open');
+  document.body.style.overflow='hidden';
+  if(!CI['chart-em-pf-ratio'])buildThm3Chart();
+}
+function closeRatioChart(){
+  document.getElementById('pop-ratio').classList.remove('open');
+  document.body.style.overflow='';
 }
 
 function buildThm3Chart(){
@@ -1277,7 +1316,103 @@ function buildThm3Chart(){
     }
   });
 }
-  
+/* ── UTILITY COMPARISON CHART (Problem slide) ── */
+function buildUtilityChart(){
+  const n=50,eps=2.0;
+  const scores=Array.from({length:n},(_,i)=>n-i);   // rank 1 = highest score
+  const maxS=scores[0];
+
+  // Softmax / EM probabilities
+  const smRaw=scores.map(s=>Math.exp(eps*s/2));
+  const smZ=smRaw.reduce((a,b)=>a+b,0);
+  const smP=smRaw.map(v=>v/smZ);
+
+  // PF / RNM-Exp probabilities — P(rank k selected) under PF
+  // P(k) = p_k * prod_{j=1}^{k-1}(1-p_j)  where p_j = exp(-eps*(maxS-s_j)/2)
+  const coinP=scores.map(s=>Math.exp(-eps*(maxS-s)/2));
+  const pfP=[];
+  let survProb=1;
+  for(let k=0;k<n;k++){
+    pfP.push(coinP[k]*survProb);
+    survProb*=(1-coinP[k]);
+  }
+  // normalise residual to last token
+  pfP[n-1]+=survProb;
+
+  // expected errors
+  const smErr=smP.reduce((a,p,i)=>a+p*(i+1),0).toFixed(2);
+  const pfErr=pfP.reduce((a,p,i)=>a+p*(i+1),0).toFixed(2);
+
+  const labels=Array.from({length:n},(_,i)=>i+1);
+  const ctx=document.getElementById('chart-utility-cmp');
+  if(!ctx)return;
+  if(CI['chart-utility-cmp']){CI['chart-utility-cmp'].destroy();}
+
+  CI['chart-utility-cmp']=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {
+          label:'Softmax / EM  (Error: '+smErr+')',
+          data:smP,
+          backgroundColor:'rgba(248,113,113,.55)',
+          borderColor:'#f87171',
+          borderWidth:1,
+          borderRadius:2,
+          barPercentage:0.85,
+        },
+        {
+          label:'PF / RNM-Exp  (Error: '+pfErr+')',
+          data:pfP,
+          backgroundColor:'rgba(56,217,200,.55)',
+          borderColor:'#38d9c8',
+          borderWidth:1,
+          borderRadius:2,
+          barPercentage:0.85,
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{
+          position:'top',
+          align:'end',
+          labels:{
+            font:{family:"'Space Mono'",size:10},
+            color:'#9ba3b8',
+            boxWidth:14,
+            padding:16,
+          }
+        },
+        tooltip:{
+          backgroundColor:'rgba(8,8,14,.95)',
+          titleFont:{family:"'Exo 2'",size:11,weight:'700'},
+          bodyFont:{family:"'Space Mono'",size:10},
+          padding:10,
+          borderColor:'rgba(28,28,46,1)',
+          borderWidth:1,
+        }
+      },
+      scales:{
+        x:{
+          title:{display:true,text:'Vocabulary Rank',color:'#5a6478',font:{family:"'Space Mono'",size:10}},
+          ticks:{font:{size:9},color:'#9ba3b8',maxTicksLimit:12},
+          grid:{color:'rgba(28,28,46,.6)'},
+          border:{color:'rgba(28,28,46,.8)'}
+        },
+        y:{
+          title:{display:true,text:'Selection Probability',color:'#5a6478',font:{family:"'Space Mono'",size:10}},
+          ticks:{font:{size:9},color:'#9ba3b8'},
+          grid:{color:'rgba(28,28,46,.6)'},
+          border:{color:'rgba(28,28,46,.8)'}
+        }
+      }
+    }
+  });
+}
 </script>
 </body>
 </html>
